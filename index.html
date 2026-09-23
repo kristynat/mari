@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Marika — Brand Creative</title>
+  <meta name="description" content="Marika — brand creative, concepts, styling and set design.">
+  <link rel="preload" href="assets/font/StrichpunktSans.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="style.css?v=20260923213921">
+</head>
+<body>
+
+  <!-- Giant logotype, blends over everything like the reference -->
+  <div class="logo" aria-hidden="true">
+    <div class="logo__line logo__name" id="logoName"><span>Marika</span></div>
+    <div class="logo__line logo__line--sub"><span class="logo__roles" id="logoRoles">(Brand Creative)</span></div>
+  </div>
+
+  <header class="top">
+    <nav class="menu" aria-label="Views">
+      <a href="#" data-view="work">Work</a>, <a href="#index" data-view="index">Index</a>, <a href="#about" data-view="about">About</a>
+    </nav>
+  </header>
+
+  <!-- View: Work (carousel) -->
+  <main class="view view--work stage" id="stage" aria-label="Projects carousel">
+    <div class="track" id="track"></div>
+  </main>
+
+  <!-- View: Index (grid of all images, grouped by project) -->
+  <section class="view view--index" id="viewIndex" aria-label="Index"></section>
+
+  <!-- View: About (soft pink) -->
+  <section class="view view--about" id="viewAbout" aria-label="About"></section>
+
+  <!-- Cursor label over the carousel -->
+  <div class="cursor mono" id="cursor" aria-hidden="true"></div>
+
+  <!-- Timeline ruler under the carousel -->
+  <footer class="bottom ruler" aria-hidden="true">
+    <div class="ruler__track" id="ruler"></div>
+    <div class="ruler__needle"></div>
+  </footer>
+
+  <!-- Project detail -->
+  <div class="detail" id="detail" aria-hidden="true">
+    <div class="detail__side" id="detailSide">
+      <div class="detail__cursor mono" id="detailCursor">Close</div>
+      <div class="detail__row">
+        <a href="#" class="detail__rel" id="relPrev" aria-label="Previous project"></a>
+        <div class="detail__cur">
+          <div class="mask"><span class="detail__lbl" id="curNum"></span></div>
+          <div id="curImg"></div>
+          <div class="mask"><span class="detail__lbl" id="curTag"></span></div>
+        </div>
+        <a href="#" class="detail__rel" id="relNext" aria-label="Next project"></a>
+      </div>
+    </div>
+    <aside class="detail__panel" id="panel">
+      <header class="detail__head">
+        <a href="#" class="uline" id="close">Close</a>
+        <a href="#" class="uline" id="nextLink">Next project</a>
+      </header>
+      <div class="detail__body" id="panelBody"></div>
+    </aside>
+    <nav class="detail__controls mono" aria-label="Project navigation">
+      <button type="button" id="ctrlPrev" aria-label="Previous project">←</button>
+      <button type="button" id="ctrlClose">✕ Close</button>
+      <button type="button" id="ctrlNext" aria-label="Next project">→</button>
+    </nav>
+  </div>
+
+  <script src="main.js?v=20260923213921"></script>
+</body>
+</html>
