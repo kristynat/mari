@@ -156,8 +156,14 @@ body:not([data-view="work"]) .cursor, .is-open .cursor { opacity: 0; }
   top: .4rem;
   height: 100%;
   will-change: transform;
-  /* small ticks every 10px */
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .45) 0 1px, transparent 1px 10px) 0 12px / 100% 16px no-repeat;
+}
+/* small ticks, drawn per frame: tallest around the needle, grow with scroll speed */
+.ruler__ticks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(.4rem + 28px);
 }
 .ruler__mark {
   position: absolute;
@@ -344,7 +350,6 @@ body.is-open::before { opacity: 0; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-inline: 50vw;
   will-change: transform;
 }
 
@@ -563,7 +568,7 @@ body.is-open::before { opacity: 0; }
   pointer-events: none;
   mix-blend-mode: difference;
 }
-@media (hover: none) { .scribble { display: none; } }
+
 .p-title {
   margin: 30px 0 0;
   font-weight: 800;

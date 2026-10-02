@@ -153,14 +153,18 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 ------------------------------------------------------------------- */
 const track = $('#track');
 const stage = $('#stage');
-const slides = []; // { el, media, img, project, pIndex }
+const slides = []; // { el, img, pIndex, copy, center, width }
+// the whole set is rendered 3× side by side; the view always sits in the middle
+// copy and jumps by one set width when it drifts out → an endless loop
+const COPIES = 3;
 
-PROJECTS.forEach((p, pi) => {
+for (let copy = 0; copy < COPIES; copy++) PROJECTS.forEach((p, pi) => {
   const photos = p.images.filter((im) => im[3] !== 'deck');
   const list = photos.length ? photos : [null];
   list.forEach((im, ii) => {
     const card = document.createElement('div');
-    card.className = 'card' + (ii === 0 && pi > 0 ? ' card--gap' : '') + (ii === 0 ? ' is-first' : '');
+    card.className = 'card' + (ii === 0 ? ' card--gap is-first' : '');
+    if (copy !== 1) card.setAttribute('aria-hidden', 'true');
     card.dataset.project = pi;
 
     if (im) {
@@ -172,7 +176,7 @@ PROJECTS.forEach((p, pi) => {
       }
       card.innerHTML = `
         <div class="card__media" style="aspect-ratio:${w}/${h}">
-          <img src="${IMG + src}" alt="${p.client} — ${p.title}" loading="${slides.length < 6 ? 'eager' : 'lazy'}" draggable="false">
+          <img src="${IMG + src}" alt="${p.client} — ${p.title}" loading="${copy === 1 && ii < 4 ? 'eager' : 'lazy'}" draggable="false">
         </div>`;
     } else {
       card.innerHTML = `
@@ -191,20 +195,21 @@ PROJECTS.forEach((p, pi) => {
     track.appendChild(card);
     // wide slides are shown whole: no zoom / parallax that would crop their text
     const parallax = !card.classList.contains('card--wide');
-    slides.push({ el: card, img: parallax ? card.querySelector('img') : null, pIndex: pi, center: 0, width: 0 });
+    slides.push({ el: card, img: parallax ? card.querySelector('img') : null, pIndex: pi, copy, center: 0, width: 0 });
   });
 });
+const PER_SET = slides.length / COPIES;
 
 
 // Timeline ruler: a long tick + label where each project starts
 const ruler = $('#ruler');
-const rulerMarks = PROJECTS.map((p, pi) => {
+const rulerMarks = slides.filter((s) => s.el.classList.contains('is-first')).map((slide) => {
   const el = document.createElement('div');
   el.className = 'ruler__mark';
   // the card caption carries number + name, the ruler just marks the type
-  el.innerHTML = `<span class="ruler__label">(${p.tag})</span>`;
+  el.innerHTML = `<span class="ruler__label">(${PROJECTS[slide.pIndex].tag})</span>`;
   ruler.appendChild(el);
-  return { el, slide: slides.find((s) => s.pIndex === pi) };
+  return { el, slide };
 });
 
 /* ------------------------------------------------------------------
@@ -212,7 +217,7 @@ const rulerMarks = PROJECTS.map((p, pi) => {
 ------------------------------------------------------------------- */
 let pos = 0;       // rendered scroll position
 let target = 0;    // desired scroll position
-let minPos = 0, maxPos = 0;
+let setW = 0, midStart = 0; // width of one set, scroll pos of the middle set's first card
 let active = -1;
 let snapTimer = null;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -223,8 +228,8 @@ function measure() {
     s.width = s.el.offsetWidth;
     s.center = s.el.offsetLeft + s.width / 2 - vw / 2;
   });
-  minPos = slides[0].center;
-  maxPos = slides[slides.length - 1].center;
+  setW = slides[PER_SET].el.offsetLeft - slides[0].el.offsetLeft;
+  midStart = slides[PER_SET].center;
 
   ruler.style.width = track.scrollWidth + 'px';
   rulerMarks.forEach(({ el, slide }) => { el.style.left = slide.el.offsetLeft + 'px'; });
@@ -242,6 +247,28 @@ function nearest(p) {
 function goTo(i) {
   i = clamp(i, 0, slides.length - 1);
   target = slides[i].center;
+}
+
+// keep the view inside the middle copy: shift everything by one set width
+// (invisible, since all three copies look identical)
+function wrapLoop() {
+  if (!setW) return;
+  let shift = 0;
+  if (pos > midStart + setW / 2) shift = -setW;
+  else if (pos < midStart - setW / 2) shift = setW;
+  if (!shift) return;
+  pos += shift; target += shift; startTarget += shift; tickLastPos += shift;
+}
+
+// the copy of a project's first card closest to where we are now
+function nearestProjectSlide(pi) {
+  let best = -1, d = Infinity;
+  slides.forEach((s, i) => {
+    if (s.pIndex !== pi || !s.el.classList.contains('is-first')) return;
+    const dd = Math.abs(s.center - pos);
+    if (dd < d) { d = dd; best = i; }
+  });
+  return best;
 }
 
 function scheduleSnap(delay = 160) {
@@ -270,11 +297,7 @@ stage.addEventListener('pointermove', (e) => {
   const now = performance.now();
   const dx = e.clientX - startX;
   moved = Math.max(moved, Math.abs(dx));
-  let t = startTarget - dx * 1.15;
-  // rubber-band at edges
-  if (t < minPos) t = minPos - (minPos - t) * 0.35;
-  if (t > maxPos) t = maxPos + (t - maxPos) * 0.35;
-  target = t;
+  target = startTarget - dx * 1.15;
   const dt = Math.max(1, now - lastT);
   vel = lerp(vel, (e.clientX - lastX) / dt, 0.5);
   lastX = e.clientX;
@@ -285,8 +308,7 @@ function endDrag(e) {
   if (!dragging) return;
   dragging = false;
   stage.classList.remove('is-dragging');
-  const projected = clamp(target - vel * 260, minPos, maxPos);
-  goTo(nearest(projected));
+  goTo(nearest(target - vel * 260));
 
   // treat as click if pointer barely moved
   if (moved < 6 && e.type === 'pointerup') {
@@ -303,7 +325,7 @@ addEventListener('wheel', (e) => {
   if (view !== 'work') return smoothWheel(e);
   e.preventDefault();
   const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-  target = clamp(target + d * (e.deltaMode === 1 ? 30 : 1), minPos, maxPos);
+  target += d * (e.deltaMode === 1 ? 30 : 1);
   scheduleSnap(220);
 }, { passive: false });
 
@@ -321,6 +343,49 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && active > -1) openProject(slides[active].pIndex);
 });
 
+// Ruler ticks: a canvas redrawn each frame. Ticks sit every 10px of the
+// track, rise into a bell around the centre needle and the bell grows with
+// scroll speed, then settles back when the carousel stops.
+const rulerTicks = $('#rulerTicks');
+const rtx = rulerTicks.getContext('2d');
+const TICK_GAP = 10;
+let rulerSpeed = 0, rulerPrev = 0, rulerW = 0, rulerH = 0;
+
+function sizeRulerTicks() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  rulerW = rulerTicks.clientWidth;
+  rulerH = rulerTicks.clientHeight;
+  rulerTicks.width = rulerW * dpr;
+  rulerTicks.height = rulerH * dpr;
+  rtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  rtx.fillStyle = '#fff';
+}
+addEventListener('resize', sizeRulerTicks);
+
+function drawRulerTicks() {
+  if (!rulerW) sizeRulerTicks();
+  if (view !== 'work') return;
+  const d = Math.abs(pos - rulerPrev);
+  rulerPrev = pos;
+  // ignore the invisible loop jump
+  if (d < setW / 2) rulerSpeed = lerp(rulerSpeed, clamp(d / 35, 0, 1), d > rulerSpeed * 35 ? 0.25 : 0.06);
+
+  rtx.clearRect(0, 0, rulerW, rulerH);
+  const cx = rulerW / 2;
+  const sigma = Math.max(rulerW * 0.16, 90);
+  const peak = 10 + rulerSpeed * (rulerH - 18);
+  const base = rulerH;
+  const first = -(((pos % TICK_GAP) + TICK_GAP) % TICK_GAP);
+  for (let x = first; x < rulerW; x += TICK_GAP) {
+    const g = Math.exp(-((x - cx) ** 2) / (2 * sigma * sigma));
+    const h = Math.min(rulerH, 8 + peak * g);
+    rtx.globalAlpha = 0.4 + 0.6 * g;
+    rtx.fillRect(Math.round(x), base - h, 1, h);
+  }
+  rtx.globalAlpha = 1;
+}
+rtx.fillStyle = '#fff';
+
 // Render loop
 const logo = $('.logo');
 let logoK = 0;
@@ -328,8 +393,10 @@ let logoK = 0;
 function tick() {
   pos = reduceMotion ? target : lerp(pos, target, 0.085);
   if (Math.abs(target - pos) < 0.05) pos = target;
+  wrapLoop();
   track.style.transform = `translate3d(${-pos}px,0,0)`;
   ruler.style.transform = `translate3d(${-pos}px,0,0)`;
+  drawRulerTicks();
 
   // parallax inside each image
   const vw = innerWidth;
@@ -475,7 +542,7 @@ function animateArticle(delay, dir) {
 function openProject(pi, dir = 0, { fromHistory = false } = {}) {
   const p = PROJECTS[pi];
   if (!p) return;
-  const firstSlide = slides.findIndex((s) => s.pIndex === pi);
+  const firstSlide = nearestProjectSlide(pi);
   if (view === 'work' && firstSlide > -1 && slides[active]?.pIndex !== pi) goTo(firstSlide);
 
   const wasOpen = isOpen();
@@ -842,15 +909,133 @@ function drawScribble() {
   }
   sctx.globalAlpha = 1;
   requestAnimationFrame(drawScribble);
+
+/* On touch screens there's no cursor, so every few seconds the "pen"
+   draws a little doodle on its own, and it fades right behind the pen. */
+const DOODLES = {
+  // cursive loops, like a handwritten "llll"
+  loops: (u) => ({ x: u * 2.4 - 1.2 - 0.32 * Math.sin(u * Math.PI * 10), y: 0.32 * Math.cos(u * Math.PI * 10) - 0.1 }),
+  spiral: (u) => { const a = u * Math.PI * 6, r = 0.08 + u; return { x: r * Math.cos(a), y: r * Math.sin(a) }; },
+  heart: (u) => {
+    const t = u * Math.PI * 2;
+    return { x: (16 * Math.sin(t) ** 3) / 17, y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17 };
+  },
+  star: (u) => {
+    const pts = [...Array(11)].map((_, i) => { const a = -Math.PI / 2 + (i * 4 * Math.PI) / 5; return { x: Math.cos(a), y: Math.sin(a) }; });
+    const f = u * 5, i = Math.min(4, Math.floor(f)), k = f - i;
+    return { x: lerp(pts[i].x, pts[i + 1].x, k), y: lerp(pts[i].y, pts[i + 1].y, k) };
+  },
+  wave: (u) => ({ x: u * 2.6 - 1.3, y: 0.28 * Math.sin(u * Math.PI * 6) }),
+  circle: (u) => { const a = u * Math.PI * 2.6 - 0.4, r = 1 + 0.08 * Math.sin(u * 9); return { x: r * Math.cos(a) * 1.25, y: r * Math.sin(a) * 0.85 }; },
+};
+const doodleNames = Object.keys(DOODLES);
+let doodle = null;
+
+function startDoodle() {
+  if (view !== 'work' || isOpen() || document.hidden || reduceMotion) return;
+  const name = doodleNames[Math.floor(Math.random() * doodleNames.length)];
+  const size = Math.min(innerWidth, innerHeight) * (0.09 + Math.random() * 0.06);
+  doodle = {
+    fn: DOODLES[name],
+    size,
+    cx: innerWidth * (0.25 + Math.random() * 0.5),
+    cy: innerHeight * (0.3 + Math.random() * 0.45),
+    rot: (Math.random() - 0.5) * 0.6,
+    t0: performance.now(),
+    dur: 1100 + Math.random() * 500,
+  };
+}
+
+function stepDoodle() {
+  if (doodle) {
+    const now = performance.now();
+    const u = Math.min(1, (now - doodle.t0) / doodle.dur);
+    const { x, y } = doodle.fn(u);
+    const c = Math.cos(doodle.rot), sn = Math.sin(doodle.rot);
+    trail.push({
+      x: doodle.cx + (x * c - y * sn) * doodle.size + (Math.random() - 0.5),
+      y: doodle.cy + (x * sn + y * c) * doodle.size + (Math.random() - 0.5),
+      t: now,
+      w: 2.2,
+    });
+    if (u >= 1) doodle = null;
+  }
+  requestAnimationFrame(stepDoodle);
+}
+
+if (matchMedia('(hover: none)').matches) {
+  requestAnimationFrame(stepDoodle);
+  const loop = () => { startDoodle(); setTimeout(loop, 5000 + Math.random() * 4000); };
+  setTimeout(loop, 2500);
+}
 }
 requestAnimationFrame(drawScribble);
+
+/* On touch screens there's no cursor, so every few seconds the "pen"
+   draws a little doodle on its own, and it fades right behind the pen. */
+const DOODLES = {
+  // cursive loops, like a handwritten "llll"
+  loops: (u) => ({ x: u * 2.4 - 1.2 - 0.32 * Math.sin(u * Math.PI * 10), y: 0.32 * Math.cos(u * Math.PI * 10) - 0.1 }),
+  spiral: (u) => { const a = u * Math.PI * 6, r = 0.08 + u; return { x: r * Math.cos(a), y: r * Math.sin(a) }; },
+  heart: (u) => {
+    const t = u * Math.PI * 2;
+    return { x: (16 * Math.sin(t) ** 3) / 17, y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17 };
+  },
+  star: (u) => {
+    const pts = [...Array(11)].map((_, i) => { const a = -Math.PI / 2 + (i * 4 * Math.PI) / 5; return { x: Math.cos(a), y: Math.sin(a) }; });
+    const f = u * 5, i = Math.min(4, Math.floor(f)), k = f - i;
+    return { x: lerp(pts[i].x, pts[i + 1].x, k), y: lerp(pts[i].y, pts[i + 1].y, k) };
+  },
+  wave: (u) => ({ x: u * 2.6 - 1.3, y: 0.28 * Math.sin(u * Math.PI * 6) }),
+  circle: (u) => { const a = u * Math.PI * 2.6 - 0.4, r = 1 + 0.08 * Math.sin(u * 9); return { x: r * Math.cos(a) * 1.25, y: r * Math.sin(a) * 0.85 }; },
+};
+const doodleNames = Object.keys(DOODLES);
+let doodle = null;
+
+function startDoodle() {
+  if (view !== 'work' || isOpen() || document.hidden || reduceMotion) return;
+  const name = doodleNames[Math.floor(Math.random() * doodleNames.length)];
+  const size = Math.min(innerWidth, innerHeight) * (0.09 + Math.random() * 0.06);
+  doodle = {
+    fn: DOODLES[name],
+    size,
+    cx: innerWidth * (0.25 + Math.random() * 0.5),
+    cy: innerHeight * (0.3 + Math.random() * 0.45),
+    rot: (Math.random() - 0.5) * 0.6,
+    t0: performance.now(),
+    dur: 1100 + Math.random() * 500,
+  };
+}
+
+function stepDoodle() {
+  if (doodle) {
+    const now = performance.now();
+    const u = Math.min(1, (now - doodle.t0) / doodle.dur);
+    const { x, y } = doodle.fn(u);
+    const c = Math.cos(doodle.rot), sn = Math.sin(doodle.rot);
+    trail.push({
+      x: doodle.cx + (x * c - y * sn) * doodle.size + (Math.random() - 0.5),
+      y: doodle.cy + (x * sn + y * c) * doodle.size + (Math.random() - 0.5),
+      t: now,
+      w: 2.2,
+    });
+    if (u >= 1) doodle = null;
+  }
+  requestAnimationFrame(stepDoodle);
+}
+
+if (matchMedia('(hover: none)').matches) {
+  requestAnimationFrame(stepDoodle);
+  const loop = () => { startDoodle(); setTimeout(loop, 5000 + Math.random() * 4000); };
+  setTimeout(loop, 2500);
+}
 
 /* ------------------------------------------------------------------
    Boot
 ------------------------------------------------------------------- */
 function boot() {
   measure();
-  pos = target = minPos;
+  pos = target = midStart; // first card of the middle copy sits in the centre
   requestAnimationFrame(tick);
   requestAnimationFrame(() => document.body.classList.add('is-ready'));
 
