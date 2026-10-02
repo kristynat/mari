@@ -913,64 +913,6 @@ function drawScribble() {
 }
 requestAnimationFrame(drawScribble);
 
-/* On touch screens there's no cursor, so every few seconds the "pen"
-   draws a little doodle on its own, and it fades right behind the pen. */
-const DOODLES = {
-  // cursive loops, like a handwritten "llll"
-  loops: (u) => ({ x: u * 2.4 - 1.2 - 0.32 * Math.sin(u * Math.PI * 10), y: 0.32 * Math.cos(u * Math.PI * 10) - 0.1 }),
-  spiral: (u) => { const a = u * Math.PI * 6, r = 0.08 + u; return { x: r * Math.cos(a), y: r * Math.sin(a) }; },
-  heart: (u) => {
-    const t = u * Math.PI * 2;
-    return { x: (16 * Math.sin(t) ** 3) / 17, y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17 };
-  },
-  star: (u) => {
-    const pts = [...Array(11)].map((_, i) => { const a = -Math.PI / 2 + (i * 4 * Math.PI) / 5; return { x: Math.cos(a), y: Math.sin(a) }; });
-    const f = u * 5, i = Math.min(4, Math.floor(f)), k = f - i;
-    return { x: lerp(pts[i].x, pts[i + 1].x, k), y: lerp(pts[i].y, pts[i + 1].y, k) };
-  },
-  wave: (u) => ({ x: u * 2.6 - 1.3, y: 0.28 * Math.sin(u * Math.PI * 6) }),
-  circle: (u) => { const a = u * Math.PI * 2.6 - 0.4, r = 1 + 0.08 * Math.sin(u * 9); return { x: r * Math.cos(a) * 1.25, y: r * Math.sin(a) * 0.85 }; },
-};
-const doodleNames = Object.keys(DOODLES);
-let doodle = null;
-
-function startDoodle() {
-  if (view !== 'work' || isOpen() || document.hidden || reduceMotion) return;
-  const name = doodleNames[Math.floor(Math.random() * doodleNames.length)];
-  const size = Math.min(innerWidth, innerHeight) * (0.09 + Math.random() * 0.06);
-  doodle = {
-    fn: DOODLES[name],
-    size,
-    cx: innerWidth * (0.25 + Math.random() * 0.5),
-    cy: innerHeight * (0.3 + Math.random() * 0.45),
-    rot: (Math.random() - 0.5) * 0.6,
-    t0: performance.now(),
-    dur: 1100 + Math.random() * 500,
-  };
-}
-
-function stepDoodle() {
-  if (doodle) {
-    const now = performance.now();
-    const u = Math.min(1, (now - doodle.t0) / doodle.dur);
-    const { x, y } = doodle.fn(u);
-    const c = Math.cos(doodle.rot), sn = Math.sin(doodle.rot);
-    trail.push({
-      x: doodle.cx + (x * c - y * sn) * doodle.size + (Math.random() - 0.5),
-      y: doodle.cy + (x * sn + y * c) * doodle.size + (Math.random() - 0.5),
-      t: now,
-      w: 2.2,
-    });
-    if (u >= 1) doodle = null;
-  }
-  requestAnimationFrame(stepDoodle);
-}
-
-if (matchMedia('(hover: none)').matches) {
-  requestAnimationFrame(stepDoodle);
-  const loop = () => { startDoodle(); setTimeout(loop, 5000 + Math.random() * 4000); };
-  setTimeout(loop, 2500);
-}
 
 /* ------------------------------------------------------------------
    Boot
