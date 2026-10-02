@@ -568,6 +568,7 @@ body.is-open::before { opacity: 0; }
   pointer-events: none;
   mix-blend-mode: difference;
 }
+@media (hover: none) { .scribble { display: none; } }
 
 .p-title {
   margin: 30px 0 0;
