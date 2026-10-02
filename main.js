@@ -10,10 +10,25 @@ const PROJECTS = [
     title: 'Match for Everyday',
     credits: [['Studio', 'Creepy Studio'], ['Role', 'Brand Creative'], ['Client', 'Prestige × Jan Societé']],
     tag: 'Campaign',
-    problem: 'A footwear brand making shoes since the 1980s was launching a sneaker with a fashion designer. The risk was creating a collaboration that felt like a logo on someone else’s product.',
-    solution: 'Built the concept around what the shoe actually was: a sneaker for everyday wear. Grounded it in the tennis heritage both sides could claim, then kept the designer and film crew working from the same story.',
-    results: [['836,700', 'Views'], ['79%', 'Organic'], ['3.9×', 'ROAS']],
+    problem: 'A footwear brand making shoes since the 1980s was launching a sneaker with fashion designer Jan Černý, JAN SOCIÉTE. The challenge was to get a younger audience interested while staying true to the tennis heritage behind the design.',
+    solution: 'I brought the designer sneaker into a concept that made it a match for everyday life. Together with Jan’s team, we brought the Olympics into the tennis aesthetic to respect the shoe’s heritage. I worked with the production agency to bring the concept to life, from the shoot through to the campaign across social, media, OOH and performance.',
+    results: [['836,700', 'Views'], ['79%', 'Organic']],
     notes: ['Full results on request.'],
+    fullCredits: [
+      ['Brands', 'Prestige × JAN SOCIÉTE'],
+      ['Starring', 'Martin Fuksa, Barbora Strýcová'],
+      ['Designer', 'Jan Černý'],
+      ['Produced by', 'Hdhd studio'],
+      ['Director / photographer', 'Jakub Zeman'],
+      ['Line producer', 'Petr Vačata'],
+      ['DOP & edit', 'Anežka Horová'],
+      ['Gaffer', 'Lukáš Mořický'],
+      ['BTS photographer', 'Jan Votrubec'],
+      ['Stylist', 'Liz Ovcharenko'],
+      ['MUAH', 'Monika Snopková'],
+      ['Models', 'Tomáš Rulík, Kateřina Libovická'],
+      ['Graphic design', 'Creepy Studio'],
+    ],
     images: [
       ['prestige-1.jpg', 1600, 2000],
       ['prestige-2.jpg', 1599, 2000],
@@ -75,8 +90,9 @@ const PROJECTS = [
     title: 'Wait for This One',
     credits: [['Studio', 'Creepy Studio'], ['Role', 'Brand Creative']],
     tag: 'Brand concept',
-    problem: 'A metal-frame manufacturer that had built furniture for other brands for years decided to sell under its own name, with no name, positioning or finished product.',
-    solution: 'Created the name of the brand. Research first, then a territory nobody was holding: design furniture for the places people wait. The brand turned waiting from the worst part of a public space into the best one, including in the name itself.',
+    problem: 'A metal-frame manufacturer that had spent years making furniture for other brands decided to launch its own. But it had no name, positioning or distinctive communication concept.',
+    solution: 'Created the brand name and researched public spaces to find a simple idea: turning unpleasant waiting into joy through communication and design.',
+    notes: ['Concept by me; drawn by the studio’s designers.', 'Full results on request.'],
     badge: 'Unreleased — waiting for launch',
     images: [
       ['arqsit-1.jpg', 1600, 908],
@@ -89,10 +105,10 @@ const PROJECTS = [
     client: 'AUREAN',
     title: 'Enrichment',
     credits: [['Studio', 'Creepy Studio'], ['Role', 'Brand Creative']],
-    tag: 'Brand identity',
+    tag: 'Brand Guidelines',
     problem: 'A luxury leather goods brand entering a category where bags are treated as seasonal accessories.',
     solution: 'Positioned the bag closer to jewellery, built around beauty, craftsmanship and permanence. Two white crocodiles became the symbol, referencing the value of white crocodile hide. Built the identity and brand manual in English.',
-    notes: ['Full results on request.'],
+    notes: ['Concept by me; drawn by the studio’s designers.', 'Full results on request.'],
     images: [
       ['aurean-1.jpg', 918, 1194],
       ['aurean-2.jpg', 734, 1194],
@@ -105,16 +121,22 @@ const PROJECTS = [
 const INFO = {
   photo: ['profile-1.jpg', 1068, 1600],
   headline: '“Marika” (Brand Creative) between the idea and the set',
-  about: [
-    'Brand creative at Creepy Studio. I build brands from the thought up — names, positioning, campaign concepts and distinctive assets that give a brand something only it can own.',
-    'Outside the studio I work on set: styling, set design, production coordination and behind-the-scenes photography for music videos, jewellery and fashion shoots. Being close to the camera taught me what an idea has to survive to end up on screen.',
+  sections: [
+    ['What drives my work', [
+      ['Own mind', 'Develop brand ideas across 360° marketing and bring them into the visual world through production, styling and photography.'],
+      ['Strategy', 'Work with data, research and consumer insights to identify opportunities, define the direction of ideas and connect creative thinking with business goals.'],
+      ['Collabs', 'Work directly with CEOs and CMOs, lead strategic workshops and build long-term relationships with clients.'],
+    ]],
+    ['Looking ahead', [
+      [null, 'International and intercultural creative teams.'],
+      [null, 'High fashion, design and creative fields.'],
+      [null, 'Taking on projects where strategy, brand and visual execution meet.'],
+    ]],
   ],
   rows: [
-    ['Studio', 'Creepy Studio — Brand Creative'],
-    ['Freelance', 'Set design, styling, production, BTS photography'],
-    ['Clients', 'Prestige, Jan Societé, UNUO, ARQSIT, AUREAN, Redzed, Šimon Lukáč'],
-    ['Instagram', '<a class="uline" href="https://instagram.com/fruttidimari_" target="_blank" rel="noopener">@fruttidimari_</a>'],
-    ['Email', '<a class="uline" href="mailto:hello@example.com">hello@example.com</a>'],
+    ['LinkedIn', '<a class="uline" href="https://www.linkedin.com/in/marika-holi%C5%A1ov%C3%A1/" target="_blank" rel="noopener">Marika Holišová</a>'],
+    ['Instagram', '<a class="uline" href="https://www.instagram.com/fruttidi_mari" target="_blank" rel="noopener">@fruttidi_mari</a>'],
+    ['E-mail', '<a class="uline" href="mailto:marikaholisova65@gmail.com">marikaholisova65@gmail.com</a>'],
   ],
 };
 
@@ -405,6 +427,10 @@ function renderArticle(pi) {
         `<div><dt>${n}</dt><dd class="mono">${l}</dd></div>`).join('')}</dl>` : ''}
       ${p.badge ? `<p class="p-badge mono">${p.badge}</p>` : ''}
       ${(p.notes || []).length ? `<div class="p-notes mono">${p.notes.map((n) => `<p>${n}</p>`).join('')}</div>` : ''}
+      ${p.fullCredits ? `<section class="p-full">
+        <h3 class="p-full__h mono">Full credits</h3>
+        <dl>${p.fullCredits.map(([k, v]) => `<div><dt class="mono">${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+      </section>` : ''}
       ${media(p)}
     </div>`;
   panelBody.scrollTop = 0;
@@ -559,7 +585,13 @@ VIEWS.about.innerHTML = `
   <div class="ab-grid">
     <img class="ab-photo" src="${IMG + aSrc}" width="${aW}" height="${aH}" loading="lazy" alt="Portrait of Marika">
     <div class="ab-text">
-      ${INFO.about.map((t) => `<p>${t}</p>`).join('')}
+      ${INFO.sections.map(([h, items]) => `
+        <section class="ab-sec">
+          <h3 class="ab-h mono">${h}</h3>
+          <ul class="ab-list">
+            ${items.map(([k, v]) => `<li>${k ? `<b>${k}</b> ` : ''}${v}</li>`).join('')}
+          </ul>
+        </section>`).join('')}
       <div class="ab-rows">
         ${INFO.rows.map(([k, v]) => `<dl class="p-block"><dt>${k}</dt><dd>${v}</dd></dl>`).join('')}
       </div>
@@ -644,7 +676,10 @@ function animateIn(v) {
 /* ------------------------------------------------------------------
    Logotype: her disciplines cycle under the name
 ------------------------------------------------------------------- */
-const ROLES = ['(Brand Creative)', '(Concept)', '(Naming)', '(Styling)', '(Set Design)'];
+const ROLES = [
+  '(Creative Concept)', '(Campaigns)', '(Brand Strategy)', '(Brand Guidelines)', '(Naming)',
+  '(Tone of Voice)', '(Styling)', '(Photography Assistance)', '(Production)',
+];
 const logoRoles = $('#logoRoles');
 let roleI = 0;
 setInterval(() => {

@@ -313,6 +313,17 @@ body.is-open::before { opacity: 0; }
 }
 .ab-photo { width: 100%; height: auto; }
 .ab-text p { font-size: clamp(16px, 1.5vw, 21px); line-height: 1.4; margin: 0 0 1.2em; max-width: 36em; }
+.ab-sec { margin: 0 0 2.4rem; }
+.ab-h { margin: 0 0 1rem; color: rgba(10, 10, 10, .5); font-weight: 400; text-transform: uppercase; }
+.ab-list { list-style: none; margin: 0; padding: 0; }
+.ab-list li {
+  font-size: clamp(16px, 1.5vw, 21px);
+  line-height: 1.4;
+  max-width: 36em;
+  padding: .7em 0;
+  border-top: 1px solid rgba(10, 10, 10, .15);
+}
+.ab-list b { font-weight: 700; font-variation-settings: "wght" 700; }
 .ab-rows { margin-top: 2.4rem; }
 .ab-rows .p-block { border-top-color: rgba(10, 10, 10, .15); }
 .ab-rows .p-block dt { color: rgba(10, 10, 10, .5); }
@@ -620,6 +631,18 @@ body.is-open::before { opacity: 0; }
   background: #f1f1f1;
 }
 .p-notes { margin-top: 28px; color: var(--mute); }
+.p-full { margin-top: clamp(48px, 6vw, 80px); }
+.p-full__h { margin: 0 0 14px; font-weight: 400; color: var(--mute); text-transform: uppercase; }
+.p-full dl { margin: 0; border-top: 1px solid var(--line); }
+.p-full dl > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 3fr;
+  gap: 1.5em;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.p-full dt { color: var(--mute); text-transform: uppercase; padding-top: .15em; }
+.p-full dd { margin: 0; font-size: 15px; line-height: 1.35; }
 .p-notes p { margin: 0 0 6px; }
 
 /* image rhythm: full, then pairs of different sizes, like the reference */
